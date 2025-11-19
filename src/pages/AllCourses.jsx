@@ -1,113 +1,91 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import "./AllCourses.css";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
 
-function AllCourses() {
-  const navigate = useNavigate();
+const AllStudentCourses = () => {
+  const [courses, setCourses] = useState([]);
 
-  const courses = [
-    {
-      id: 1,
-      title: "Introduction to Python Programming",
-      image: "intro to python proggramming.jpg",
-      alt: "Python Programming Course",
-    },
-    {
-      id: 2,
-      title: "Advanced Excel for Data Analysis",
-      image: "exforda.jpg",
-      alt: "Excel for Data Analysis Course",
-      description: "Master Excel's advanced features for data analysis...",
-      duration: "4 weeks",
-    },
-    {
-      id: 3,
-      title: "Creative Writing Workshop",
-      image: "cww.jpg",
-      alt: "Creative Writing Course",
-      description: "Enhance your writing skills through creative exercises...",
-      duration: "6 weeks",
-    },
-    {
-      id: 4,
-      title: "Project Management Essentials",
-      image: "Pme.jpg",
-      alt: "Project Management Course",
-      description: "Learn the fundamentals of project management...",
-      duration: "5 weeks",
-    },
-    {
-      id: 5,
-      title: "SEO Optimization Techniques",
-      image: "seo.jpg",
-      alt: "SEO Optimization Course",
-      description: "Improve your website's visibility with SEO techniques...",
-      duration: "4 weeks",
-    },
-    {
-      id: 6,
-      title: "Data Science Fundamentals",
-      image: "gdf.jpg",
-      alt: "Data Science Course",
-      description: "Get started with data science and machine learning...",
-      duration: "8 weeks",
-    },
-    {
-      id: 7,
-      title: "Web Development Bootcamp",
-      image: "web.jpg",
-      alt: "Web Development Bootcamp",
-      description:
-        "Become a full-stack web developer in this comprehensive bootcamp...",
-      duration: "12 weeks",
-    },
-    {
-      id: 8,
-      title: "Digital Marketing Strategies",
-      image: "dms.jpeg",
-      alt: "Digital Marketing Course",
-      description:
-        "Learn effective digital marketing strategies to grow your business...",
-      duration: "6 weeks",
-    },
-  ];
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/courses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCourses(res.data);
+      } catch (err) {
+        console.error("Failed to fetch courses:", err);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   return (
-    <div className="all-courses-container">
-      {/* Navigation Sidebar (unchanged) */}
+    <div className="p-6 ml-">
+      <h2 className="text-3xl font-bold mb-6 mt-15 text-gray-800">
+        All Courses
+      </h2>
+      <div className="space-y-6">
+        {courses.map((c) => (
+          <div
+            key={c._id}
+            className="flex flex-col md:flex-row items-start gap-6 bg-white shadow-md rounded-xl overflow-hidden border border-gray-200"
+          >
+            {/* Course Image */}
+            {c.image && (
+              <img
+                src={`http://localhost:5000${c.image}`}
+                alt={c.title}
+                className="w-full md:w-60 h-40 object-cover"
+              />
+            )}
+            {/* Course Info */}
+            <div className="flex-1 p-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                {c.title}
+              </h3>
+              <p className="text-sm text-gray-500 mb-2">
+                Category: {c.category}
+              </p>
+              <p className="text-gray-700 mb-4">{c.description}</p>
 
-      {/* Courses Row */}
-      <div className="courses-row">
-        <h2 className="courses-heading">Available Courses</h2>
-        <div className="row-container">
-          {courses.map((course) => (
-            <div key={course.id} className="course-card-horizontal">
-              <div className="course-image-horizontal">
-                <img
-                  src={`/images/${course.image}`}
-                  alt={course.alt}
-                  className="subject-image-horizontal"
-                  onError={(e) => {
-                    e.target.src = "/images/default-course.jpg";
-                    e.target.alt = "Default course image";
-                  }}
-                />
-              </div>
-              <div className="course-info-horizontal">
-                <h3>{course.title}</h3>
-                <button
-                  className="view-btn-horizontal"
-                  onClick={() => navigate(`/course/${course.id}`)}
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  to={`/courses/${c._id}`}
+                  className="px-4 py-2 bg-[#e44d30] text-white text-sm font-medium rounded-lg shadow hover:bg-[#ae4530] transition"
                 >
                   View Details
-                </button>
+                </Link>
+                <Link
+                  to={`/signup`}
+                  className="px-4 py-2 bg-[#e44d30] text-white text-sm font-medium rounded-lg shadow hover:bg-[#ae4530] transition"
+                >
+                  Enroll
+                </Link>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
+const handleEnroll = async (courseId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No token found. Please login first.");
 
-export default AllCourses;
+    await axios.post(
+      `http://localhost:5000/api/courses/${courseId}/enroll`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert("✅ Enrolled successfully!");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to enroll: " + (err.response?.data?.message || err.message));
+  }
+};
+
+export default AllStudentCourses;
